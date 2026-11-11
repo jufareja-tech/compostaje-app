@@ -12,12 +12,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;0,800;0,900;1,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Botón flotante "Reportar problema" */
+        .fab-reportar{position:fixed;right:14px;bottom:14px;z-index:40;border:0;border-radius:999px;padding:10px 16px;
+            background:var(--header-dark);color:#fff;font:inherit;font-weight:800;font-size:.9rem;cursor:pointer;
+            box-shadow:0 6px 16px rgba(22,48,42,.35)}
+        .fab-reportar:hover{background:var(--header)}
+        .fab-reportar:disabled{opacity:.7}
+        .reporte-caja{max-height:92vh;overflow:auto}
+        .reporte-caja textarea{width:100%;padding:12px 14px;font:inherit;border:2px solid var(--leaf-soft);border-radius:14px;background:#f7fcf9;color:var(--ink);resize:vertical}
+        .reporte-caja textarea:focus{outline:none;border-color:var(--header);background:#fff}
+        .rep-captura{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+        .rep-captura img{width:100%;max-height:220px;object-fit:contain;border-radius:14px;background:#eef6f1;border:2px solid var(--leaf-soft)}
+        @media print{.fab-reportar{display:none}}
+    </style>
 </head>
 <body>
     <header class="topbar">
         <a href="{{ url_for('inicio') }}" class="brand"><span class="brand-logo">🌱</span><span class="t">Control de compostaje</span></a>
-        <nav class="nav">
-            {% if session.get('usuario_id') %}
+
+        <!-- Le agregamos el id="menu-principal" para poder controlarlo con JavaScript -->
+        <nav class="nav" id="menu-principal">
+            {% if offline_mode %}
+                <a href="{{ url_for('login') }}" class="pill" id="btnSalirOffline">Salir</a>
+            {% elif session.get('usuario_id') %}
 
                 {# Admin y Validador ven Revisión, Estudiantes y Reportes #}
                 {% if session.get('rol') in ['admin', 'validador'] %}
@@ -46,6 +64,13 @@
         </nav>
     </header>
 
+    {% if session.get('usuario_id') %}
+    <div id="sesion-info" hidden
+         data-nc="{{ session.get('numeroControl', '') }}"
+         data-rol="{{ session.get('rol', '') }}"
+         data-nombre="{{ session.get('nombre', '') }}"></div>
+    {% endif %}
+
     <main>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -60,13 +85,15 @@
         {% block content %}{% endblock %}
     </main>
 
+    <button type="button" class="fab-reportar" id="btnReportar" aria-label="Reportar un problema">🐞 Reportar problema</button>
+
     <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
 
     <!-- PWA: Registrar el Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('Service Worker registrado con éxito:', registration.scope);
                     })
@@ -77,17 +104,34 @@
         }
     </script>
 
-    <!-- NUEVO: GUARDAR SESIÓN OFFLINE SOLO PARA ESTUDIANTES -->
-    {% if session.get('usuario_id') and session.get('rol') == 'estudiante' %}
+    <!-- SCRIPT PARA OCULTAR BOTONES EN MODO OFFLINE -->
     <script>
-        // Guardamos los datos del alumno en la memoria del celular para el modo offline
-        localStorage.setItem('offline_student', JSON.stringify({
-            id: "{{ session.get('usuario_id') }}",
-            nombre: "{{ session.get('nombre') }}",
-            numeroControl: "{{ session.get('numeroControl') }}"
-        }));
-    </script>
-    {% endif %}
+        function ajustarMenuOffline() {
+            const menu = document.getElementById('menu-principal');
+            if (!menu) return;
+            const enlaces = menu.querySelectorAll('a');
 
+            // Verificamos si hay conexión a internet
+            if (!navigator.onLine) {
+                enlaces.forEach(enlace => {
+                    const texto = enlace.textContent.toLowerCase();
+                    // Si no hay internet, solo dejamos visible "Registrar" y "Cerrar sesión / Salir"
+                    if (texto.includes('registrar') || texto.includes('cerrar') || texto.includes('salir')) {
+                        enlace.style.display = 'inline-block';
+                    } else {
+                        enlace.style.display = 'none';
+                    }
+                });
+            } else {
+                // Si hay internet, mostramos todo normal
+                enlaces.forEach(enlace => enlace.style.display = 'inline-block');
+            }
+        }
+
+        // Ejecutar al cargar la página y cuando cambie el estado de la red
+        document.addEventListener("DOMContentLoaded", ajustarMenuOffline);
+        window.addEventListener("online", ajustarMenuOffline);
+        window.addEventListener("offline", ajustarMenuOffline);
+    </script>
 </body>
 </html>
