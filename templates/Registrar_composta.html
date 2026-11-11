@@ -1,5 +1,4 @@
 <!--suppress ALL -->
-<!--suppress ALL -->
 {% extends "base.html" %}
 {% block title %}Registrar composta{% endblock %}
 {% block content %}
@@ -67,7 +66,7 @@
     <p><a href="{{ url_for('inicio') }}">Volver al inicio</a></p>
 </div>
 
-<!-- SCRIPT PARA MODO OFFLINE -->
+<!-- SCRIPT PARA MODO OFFLINE Y SINCRONIZACIÓN REAL -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("form-composta");
@@ -87,9 +86,10 @@ document.addEventListener("DOMContentLoaded", () => {
         offlineAlert.style.display = "block";
     });
 
+    // Interceptar el envío del formulario
     form.addEventListener("submit", async (e) => {
         if (!navigator.onLine) {
-            e.preventDefault(); // Evitamos el envío normal al servidor
+            e.preventDefault(); // Evitamos el envío normal porque no hay red
 
             const formData = new FormData(form);
             const data = {
@@ -115,27 +115,48 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Guardar en la memoria del celular
     function guardarOffline(data) {
         let pendientes = JSON.parse(localStorage.getItem("compostas_pendientes") || "[]");
         pendientes.push(data);
         localStorage.setItem("compostas_pendientes", JSON.stringify(pendientes));
 
-        alert("📴 No tienes internet. La composta se guardó en tu dispositivo. Se enviará automáticamente cuando recuperes la conexión.");
+        alert("📴 No tienes internet. La composta se guardó en tu dispositivo de forma segura. Se enviará automáticamente cuando recuperes la señal.");
+
+        // Limpiar el formulario
         form.reset();
-        // Ocultar vista previa de la foto
         document.getElementById("fotoVista").hidden = true;
         document.getElementById("fotoNombre").textContent = "Ningún archivo seleccionado";
     }
 
-    function sincronizarPendientes() {
+    // Sincronizar con el servidor cuando vuelve el internet
+    async function sincronizarPendientes() {
         let pendientes = JSON.parse(localStorage.getItem("compostas_pendientes") || "[]");
+
         if (pendientes.length > 0) {
-            if(confirm(`Se detectó conexión a internet. Tienes ${pendientes.length} composta(s) pendiente(s). ¿Deseas enviarlas ahora?`)) {
-                // Aquí se haría el envío real al servidor usando fetch()
-                // Por seguridad y simplicidad en esta prueba, solo limpiamos la memoria
-                // (En un sistema real, aquí subiríamos los datos a MongoDB)
+            if(confirm(`✅ ¡Se detectó conexión a internet! Tienes ${pendientes.length} composta(s) guardada(s). ¿Deseas enviarlas al servidor ahora?`)) {
+
+                for (const composta of pendientes) {
+                    try {
+                        // Enviamos los datos a la nueva ruta de Flask
+                        const response = await fetch('/sync_offline_composta', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(composta)
+                        });
+
+                        if (!response.ok) throw new Error("Error al subir");
+
+                    } catch (error) {
+                        console.error("Fallo al sincronizar:", error);
+                        alert("Hubo un error de conexión al enviar. Se intentará de nuevo más tarde.");
+                        return; // Detenemos el proceso para no borrar los datos
+                    }
+                }
+
+                // Si todo se envió bien, limpiamos la memoria
                 localStorage.removeItem("compostas_pendientes");
-                alert("✅ Compostas sincronizadas (Simulación).");
+                alert("🎉 ¡Todas las compostas pendientes se han subido exitosamente al servidor!");
                 location.reload();
             }
         }

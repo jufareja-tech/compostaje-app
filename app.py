@@ -953,6 +953,53 @@ def registrar_muestra():
 def sw():
     return send_from_directory(app.static_folder, 'sw.js', mimetype='application/javascript')
 
+
+@app.route("/sync_offline_composta", methods=["POST"])
+@rol_requerido("estudiante")
+def sync_offline_composta():
+    data = request.get_json()
+    if not data:
+        return {"error": "No data"}, 400
+
+    # Extraer datos
+    peso = data.get("peso")
+    ingredientes = data.get("ingredientes", [])
+    foto_base64 = data.get("fotoBase64")
+
+    usuario = usuarios.find_one({"_id": ObjectId(session["usuario_id"])})
+    if not usuario:
+        return {"error": "Usuario no encontrado"}, 404
+
+    # Preparar los campos de la foto de forma segura
+    foto_campos = {}
+    if foto_base64:
+        try:
+            header, encoded = foto_base64.split(",", 1)
+            mime = header.split(";")[0].split(":")[1]
+            datos_binarios = base64.b64decode(encoded)
+            foto_campos = campos_foto(datos_binarios, mime)
+        except Exception as e:
+            print("Error al procesar la foto offline:", e)
+
+    ahora = datetime.now()
+
+    # Guardar en MongoDB
+    compostas.insert_one({
+        "codigo": generar_codigo(),
+        "usuarioId": session["usuario_id"],
+        "fotografia": data.get("fotoNombre", "offline.jpg"),
+        **foto_campos,
+        "semestreCursado": usuario.get("semestre", 1),
+        "pesoKg": float(peso),
+        "fechaRegistro": ahora,
+        "periodo": periodo_de(ahora),
+        "ingredientes": ingredientes,
+        "estado": "Pendiente",
+        "observaciones": "",
+    })
+
+    return {"success": True}, 200
+
 if __name__ == "__main__":
     # El host '0.0.0.0' permite conexiones desde otros dispositivos en la misma red
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
