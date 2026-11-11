@@ -1,10 +1,13 @@
-<!--suppress ALL -->
 {% extends "base.html" %}
 {% block title %}Iniciar sesión{% endblock %}
 {% block content %}
 <div class="form-container">
     <h2>🔑 Iniciar sesión</h2>
-    <form method="POST" action="{{ url_for('login') }}">
+    <div id="offline-alert" class="alert alert-error" style="display: none;">
+        ⚠️ Estás sin internet. Usando modo offline (Solo estudiantes).
+    </div>
+
+    <form method="POST" action="{{ url_for('login') }}" id="form-login">
         <div class="form-group"><label for="numeroControl">Número de control</label>
             <input type="text" id="numeroControl" name="numeroControl" required></div>
         <div class="form-group"><label for="password">Contraseña</label>
@@ -13,4 +16,31 @@
     </form>
     <p>¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate aquí</a></p>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("form-login");
+    const offlineAlert = document.getElementById("offline-alert");
+
+    if (!navigator.onLine) {
+        offlineAlert.style.display = "block";
+    }
+
+    form.addEventListener("submit", (e) => {
+        if (!navigator.onLine) {
+            e.preventDefault(); // Evitamos enviar al servidor
+
+            const numControl = document.getElementById("numeroControl").value;
+            const offlineStudent = JSON.parse(localStorage.getItem("offline_student"));
+
+            if (offlineStudent && offlineStudent.numeroControl === numControl) {
+                alert("✅ Modo Offline: Bienvenido " + offlineStudent.nombre + ". Redirigiendo...");
+                window.location.href = "/registrar_composta"; // Lo mandamos directo a registrar
+            } else {
+                alert("❌ Error: No hay conexión y este usuario no está guardado en el dispositivo. Necesitas internet para el primer inicio de sesión.");
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

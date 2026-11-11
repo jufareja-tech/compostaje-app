@@ -76,5 +76,18 @@
             });
         }
     </script>
+
+    <!-- NUEVO: GUARDAR SESIÓN OFFLINE SOLO PARA ESTUDIANTES -->
+    {% if session.get('usuario_id') and session.get('rol') == 'estudiante' %}
+    <script>
+        // Guardamos los datos del alumno en la memoria del celular para el modo offline
+        localStorage.setItem('offline_student', JSON.stringify({
+            id: "{{ session.get('usuario_id') }}",
+            nombre: "{{ session.get('nombre') }}",
+            numeroControl: "{{ session.get('numeroControl') }}"
+        }));
+    </script>
+    {% endif %}
+
 </body>
 </html>

@@ -358,6 +358,7 @@ def login():
             session["nombre"] = usuario["nombre"]
             rol_db = usuario.get("rol")
             session["rol"] = rol_db if rol_db else "estudiante"
+            session["numeroControl"] = numeroControl
             flash("Inicio de sesión exitoso.", "success")
             return redirect(url_for("inicio"))
     return render_template("login.html")
