@@ -724,7 +724,7 @@ def estudiante_detalle(uid):
 def reportes():
     reporte = request.args.get("reporte", "participaciones")
     estado = "Todas" if request.args.get("estado") == "Todas" else "Aceptada"
-    alumnos = mapa_usuarios()
+    alumnos = estudiantes_validos()
     carreras = sorted(
         {u.get("carrera", "") for u in alumnos.values() if u.get("carrera") and u.get("carrera") != "Personal"})
 
