@@ -1,0 +1,41 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Mis compostas{% endblock %}
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Mis compostas</h1>
+    <p class="page-sub">Hola, <strong>{{ session.get('nombre') }}</strong>. Kilos aceptados hasta ahora: <strong>{{ kilos_aceptados }} kg</strong>.</p>
+    {% if compostas %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Composta</th><th>Fotografía</th><th>Peso</th><th>Ingredientes</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for c in compostas %}
+        <tr>
+            <td><strong>{{ c.get('codigo', '—') }}</strong><br><small>{{ c.fechaRegistro|fecha }}</small><br><span class="tag">{{ c.periodo }}</span></td>
+            <td><a href="{{ url_for('foto', id_composta=c._id) }}" target="_blank"><img data-foto src="{{ url_for('foto', id_composta=c._id) }}" alt="Foto de la composta"></a></td>
+            <td>{{ c.pesoKg }} kg{% if c.get('valoresOriginales') %}<p class="nota">Datos corregidos por el administrador.</p>{% endif %}</td>
+            <td>{% for i in c|ingredientes %}<span class="tag">{{ i }}</span>{% endfor %}</td>
+
+            <!-- AQUÍ ESTÁ EL CAMBIO: Se reemplazó el <td> original por este -->
+            <td>
+                <span class="badge {{ c.get('estado', 'Pendiente')|lower }}">{{ c.get('estado', 'Pendiente') }}</span>
+                {% if c.get('observaciones') %}<p class="nota">{{ c.observaciones }}</p>{% endif %}
+
+                {% if c.get('estado') == 'Rechazada' %}
+                    <a class="btn small" style="margin-top: 8px;" href="{{ url_for('corregir_composta', id_composta=c._id) }}">✏️ Corregir y reenviar</a>
+                {% endif %}
+            </td>
+            <!-- FIN DEL CAMBIO -->
+
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}
+    <div class="card empty"><div class="big">🌱</div>
+        <p>Aún no has registrado ninguna composta.</p>
+        <a class="btn" href="{{ url_for('registrar_composta') }}">Registrar mi primera composta</a></div>
+    {% endif %}
+    <div class="actions"><a href="{{ url_for('registrar_composta') }}" class="btn">Registrar otra composta</a> <a href="{{ url_for('inicio') }}" class="btn ghost">Volver al inicio</a></div>
+</div>
+{% endblock %}

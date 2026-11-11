@@ -1,0 +1,80 @@
+<!--suppress ALL -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Control de compostaje{% endblock %}</title>
+
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#3f6b5c">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;0,800;0,900;1,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <a href="{{ url_for('inicio') }}" class="brand"><span class="brand-logo">🌱</span><span class="t">Control de compostaje</span></a>
+        <nav class="nav">
+            {% if session.get('usuario_id') %}
+
+                {# Admin y Validador ven Revisión, Estudiantes y Reportes #}
+                {% if session.get('rol') in ['admin', 'validador'] %}
+                <a href="{{ url_for('admin') }}">Revisión</a>
+                <a href="{{ url_for('estudiantes') }}">Estudiantes</a>
+                <a href="{{ url_for('reportes') }}">Reportes</a>
+                {% endif %}
+
+                {# Admin y Laboratorista ven el Laboratorio #}
+                {% if session.get('rol') in ['admin', 'laboratorista'] %}
+                <a href="{{ url_for('laboratorio') }}">Laboratorio</a>
+                {% endif %}
+
+                {# Solo los estudiantes ven estas opciones #}
+                {% if session.get('rol') == 'estudiante' %}
+                <a href="{{ url_for('registrar_composta') }}">Registrar</a>
+                <a href="{{ url_for('mis_compostas') }}">Mis compostas</a>
+                <a href="{{ url_for('perfil') }}">Mi perfil</a>
+                {% endif %}
+
+                <a href="{{ url_for('logout') }}" class="pill">Cerrar sesión</a>
+            {% else %}
+                <a href="{{ url_for('registro') }}">Registrarse</a>
+                <a href="{{ url_for('login') }}" class="pill">Iniciar sesión</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flashes">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+
+    <!-- PWA: Registrar el Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Fallo al registrar el Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

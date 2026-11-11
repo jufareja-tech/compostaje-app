@@ -1,0 +1,138 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Registrar Muestra{% endblock %}
+{% block content %}
+<div class="form-container wide">
+    <h2>🧪 Registrar Nueva Muestra (Análisis Completo)</h2>
+
+    <form method="POST" action="{{ url_for('registrar_muestra') }}" enctype="multipart/form-data">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label for="tipo_residuo">Tipo de Residuo / Pila</label>
+                <input type="text" id="tipo_residuo" name="tipo_residuo" placeholder="Ej. Pila B1 80D" required>
+            </div>
+            <div class="form-group">
+                <label for="inoculo">Inóculo</label>
+                <input type="text" id="inoculo" name="inoculo" placeholder="Ej. Ninguno">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label for="fecha_muestreo">Fecha de muestreo</label>
+                <input type="date" id="fecha_muestreo" name="fecha_muestreo">
+            </div>
+            <div class="form-group">
+                <label for="fecha_inoculacion">Fecha de Inoculación</label>
+                <input type="date" id="fecha_inoculacion" name="fecha_inoculacion">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label for="temp_ambiente">Temperatura ambiente (°C)</label>
+                <input type="number" step="0.1" id="temp_ambiente" name="temp_ambiente">
+            </div>
+            <div class="form-group">
+                <label for="temp_pila">Temperatura de la pila (°C)</label>
+                <input type="number" step="0.1" id="temp_pila" name="temp_pila">
+            </div>
+        </div>
+
+        <fieldset class="form-group" style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
+            <legend>Mediciones y Desviación Estándar (±)</legend>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>pH</label>
+                    <input type="number" step="0.1" name="ph" placeholder="Valor (Ej. 9.3)">
+                </div>
+                <div class="form-group">
+                    <label>Desviación (±)</label>
+                    <input type="number" step="0.001" name="ph_desv" placeholder="Ej. 0.01">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Conductividad Eléctrica (µS/Cm)</label>
+                    <input type="number" step="0.1" name="conductividad">
+                </div>
+                <div class="form-group">
+                    <label>Desviación (±)</label>
+                    <input type="number" step="0.1" name="conductividad_desv" placeholder="Ej. 361.7">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>% Humedad</label>
+                    <input type="number" step="0.01" name="humedad">
+                </div>
+                <div class="form-group">
+                    <label>Desviación (±)</label>
+                    <input type="number" step="0.0001" name="humedad_desv">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>% Materia Orgánica</label>
+                    <input type="number" step="0.01" name="materia_organica">
+                </div>
+                <div class="form-group">
+                    <label>Desviación (±)</label>
+                    <input type="number" step="0.0001" name="materia_organica_desv">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>% Cenizas</label>
+                    <input type="number" step="0.01" name="cenizas">
+                </div>
+                <div class="form-group">
+                    <label>Desviación (±)</label>
+                    <input type="number" step="0.0001" name="cenizas_desv">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>% Carbono</label>
+                    <input type="number" step="0.01" name="carbono">
+                </div>
+                <div class="form-group">
+                    <label>Desviación (±)</label>
+                    <input type="number" step="0.0001" name="carbono_desv">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>% Nitrógeno</label>
+                    <input type="number" step="0.0001" name="nitrogeno">
+                </div>
+                <div class="form-group">
+                    <label>Relación C:N</label>
+                    <input type="text" name="relacion_cn" placeholder="Ej. 4.7:1">
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-group">
+            <label for="fotografias">Fotografías de la muestra (opcional, varias)</label>
+            <input type="file" id="fotografias" name="fotografias" accept="image/*" multiple>
+        </div>
+
+        <div class="form-group">
+            <label for="observaciones">Observaciones</label>
+            <textarea id="observaciones" name="observaciones" rows="3" placeholder="Anotaciones adicionales..."></textarea>
+        </div>
+
+        <button type="submit" class="btn block">Guardar Análisis de Muestra</button>
+    </form>
+    <p style="margin-top: 15px;"><a href="{{ url_for('laboratorio') }}">Cancelar y volver al laboratorio</a></p>
+</div>
+{% endblock %}

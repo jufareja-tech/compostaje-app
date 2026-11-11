@@ -1,0 +1,81 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Revisar {{ c.get('codigo', 'composta') }}{% endblock %}
+{% block content %}
+<div class="container wide">
+    <h1 class="page-title">Revisar composta {{ c.get('codigo', '') }}</h1>
+    <p class="page-sub">{{ alumno.nombre if alumno else 'Usuario eliminado' }}{% if alumno %} · {{ alumno.numeroControl }} · {{ alumno.carrera }}{% endif %} · {{ c.fechaRegistro|fecha }} · {{ c.pesoKg }} kg ·
+        <span class="badge {{ c.get('estado', 'Pendiente')|lower }}">{{ c.get('estado', 'Pendiente') }}</span></p>
+
+    <div class="revision">
+        <a href="{{ url_for('foto', id_composta=c._id) }}" target="_blank" class="foto-grande">
+            <img data-foto src="{{ url_for('foto', id_composta=c._id) }}" alt="Fotografía de la composta">
+        </a>
+
+        <form method="POST" class="card">
+            <fieldset class="form-group">
+                <legend>Corregir datos registrados</legend>
+                {% if c.get('valoresOriginales') %}
+                <p class="hint">Declarado originalmente por el alumno: {{ c.valoresOriginales.pesoKg }} kg · {{ c.valoresOriginales.ingredientes|join(', ') }}.</p>
+                {% else %}
+                <p class="hint">Si lo que ves en la fotografía no coincide, corrige el peso o los ingredientes. Se conserva lo que declaró el alumno.</p>
+                {% endif %}
+                <label for="peso">Peso (kg)</label>
+                <input type="number" step="0.1" min="0.1" id="peso" name="peso" value="{{ c.pesoKg }}" required>
+                <p class="label-like" style="margin-top:14px">Ingredientes</p>
+                <div class="chips">
+                    {% for i in sugeridos %}
+                    <label class="chip"><input type="checkbox" name="declarados" value="{{ i }}" {{ "checked" if i in declarados else "" }}><span>{{ i }}</span></label>
+                    {% endfor %}
+                </div>
+                <div class="otros" data-otros data-otros-name="otrosDeclarados">
+                    <div class="otros-list">
+                        {% for o in declarados if o not in sugeridos %}
+                        <div class="otros-fila"><input type="text" name="otrosDeclarados" value="{{ o }}" maxlength="60" aria-label="Otro ingrediente"><button type="button" class="quitar" aria-label="Quitar ingrediente">✕</button></div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn ghost small" data-add-otro>+ Agregar otro ingrediente</button>
+                </div>
+            </fieldset>
+
+            <fieldset class="form-group">
+                <legend>Verificación con la fotografía</legend>
+                <p class="hint">De los ingredientes de arriba, marca los que <strong>no se ven</strong> en la fotografía.</p>
+                {% for i in declarados %}
+                <label class="chip check-row"><input type="checkbox" name="noVisibles" value="{{ i }}" {{ "checked" if i in c.get('ingredientesNoVisibles', []) else "" }}><span>{{ i }} — no se observa</span></label>
+                {% endfor %}
+            </fieldset>
+
+            <fieldset class="form-group">
+                <legend>Ingredientes observados que no se declararon</legend>
+                <div class="chips">
+                    {% for i in sugeridos if i not in declarados %}
+                    <label class="chip"><input type="checkbox" name="observados" value="{{ i }}" {{ "checked" if i in c.get('ingredientesObservados', []) else "" }}><span>{{ i }}</span></label>
+                    {% endfor %}
+                </div>
+                <div class="otros" data-otros data-otros-name="otrosObservados">
+                    <div class="otros-list">
+                        {% for o in c.get('ingredientesObservados', []) if o not in sugeridos %}
+                        <div class="otros-fila"><input type="text" name="otrosObservados" value="{{ o }}" maxlength="60" aria-label="Otro ingrediente"><button type="button" class="quitar" aria-label="Quitar ingrediente">✕</button></div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn ghost small" data-add-otro>+ Agregar otro</button>
+                </div>
+            </fieldset>
+
+            <fieldset class="form-group">
+                <legend>Decisión</legend>
+                <label class="chip check-row"><input type="radio" name="decision" value="Aceptada" required {{ "checked" if c.get('estado') == 'Aceptada' else "" }}><span>✅ Aceptar</span></label>
+                <label class="chip check-row"><input type="radio" name="decision" value="Rechazada" {{ "checked" if c.get('estado') == 'Rechazada' else "" }}><span>❌ Rechazar (el motivo es obligatorio)</span></label>
+            </fieldset>
+
+            <div class="form-group">
+                <label for="observaciones">Observaciones</label>
+                <textarea id="observaciones" name="observaciones" rows="3" maxlength="500" placeholder="Ej. Los ingredientes declarados no coinciden con la fotografía.">{{ c.get('observaciones', '') }}</textarea>
+            </div>
+            <button type="submit" class="btn block">Guardar revisión</button>
+            <p><a href="{{ url_for('admin') }}">Cancelar y volver</a></p>
+        </form>
+    </div>
+</div>
+{% endblock %}

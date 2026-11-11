@@ -1,0 +1,98 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Mi perfil{% endblock %}
+{% block content %}
+<div class="form-container">
+    <h2>👤 Mi perfil</h2>
+    <p><strong>{{ u.nombre }}</strong><br>{{ u.numeroControl }} · {{ u.carrera }}</p>
+
+    <form method="POST" action="{{ url_for('perfil') }}">
+        <div class="form-group">
+            <label for="semestre">Semestre que cursas</label>
+            <select id="semestre" name="semestre" required>
+                <option value="">Elige…</option>
+                {% for n in semestres %}
+<option value="{{ n }}" {% if u.get('semestre') == n %}selected{% endif %}>{{ n }}.º semestre</option>
+                {% endfor %}
+            </select>
+        </div>
+        <p class="hint">Actualízalo al iniciar cada periodo.</p>
+        <button type="submit" class="btn block">Guardar semestre</button>
+    </form>
+</div>
+
+<div class="container wide" style="margin-top: 20px;">
+    <!-- Tarjetas del periodo actual -->
+    <div class="stats">
+        <div class="stat">
+            <span>{{ participaciones }}</span>
+            <small>Participaciones ({{ periodo }})</small>
+        </div>
+        <div class="stat">
+            <span>{{ kilos }} kg</span>
+            <small>Kilos aceptados</small>
+        </div>
+        <div class="stat {{ color_clase }}" style="transition: background-color 0.5s;">
+            <span>{{ puntos }}</span>
+            <small>Puntos Desarrollo Humano</small>
+        </div>
+    </div>
+
+    <!-- Reglas -->
+    <div class="alert alert-info" style="margin-top: 20px; text-align: left;">
+        <strong>📌 Reglas importantes para tus entregas:</strong>
+        <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
+            <li>Las entregas son <strong>ÚNICAMENTE los días viernes de 8:00 a 9:00 am</strong>.</li>
+            <li>No se aceptan residuos en bolsa. Deben llevarse en un <strong>recipiente de plástico con tapa</strong>.</li>
+            <li>El registro debe hacerse en el momento de la entrega. No hay registros posteriores.</li>
+            <li>Todos los residuos deben vaciarse en la pila asignada.</li>
+        </ul>
+    </div>
+
+    <!-- NUEVO: Tabla de Historial por Periodos -->
+    <div style="margin-top: 40px;">
+        <h2 class="sub-title">📊 Mi historial por periodos</h2>
+        {% if historial %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Periodo</th>
+                        <th>Participaciones</th>
+                        <th>Kilos Aceptados</th>
+                        <th>Puntos DH</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in historial %}
+                    <tr>
+                        <td><strong>{{ h.periodo }}</strong></td>
+                        <td>{{ h.participaciones }}</td>
+                        <td>{{ h.kilos }} kg</td>
+                        <td>
+                            <!-- Le ponemos color al texto según los puntos -->
+                            <strong>
+                                {% if h.puntos == 0 %}<span style="color: #e74c3c;">0</span>
+                                {% elif h.puntos == 1 %}<span style="color: #f39c12;">1</span>
+                                {% elif h.puntos == 3 %}<span style="color: #2ecc71;">3</span>
+                                {% elif h.puntos == 5 %}<span style="color: #1e8449;">5</span>
+                                {% endif %}
+                            </strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            Aún no tienes historial de compostas aceptadas en periodos anteriores.
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="actions" style="margin-top: 30px;">
+        <a href="{{ url_for('inicio') }}" class="btn ghost">Volver al inicio</a>
+    </div>
+</div>
+{% endblock %}

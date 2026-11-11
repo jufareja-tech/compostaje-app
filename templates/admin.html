@@ -1,0 +1,42 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Revisión de compostas{% endblock %}
+{% block content %}
+<div class="container wide">
+    <h1 class="page-title">Revisión de compostas</h1>
+    <p class="page-sub">Compara la fotografía con los ingredientes declarados y acepta o rechaza cada entrega.</p>
+    <div class="stats">
+        <div class="stat"><span>{{ total_usuarios }}</span><small>Usuarios registrados</small></div>
+        <div class="stat"><span>{{ total_compostas }}</span><small>Compostas registradas</small></div>
+        <div class="stat"><span>{{ cuenta['Pendiente'] }}</span><small>Pendientes de revisar</small></div>
+        <div class="stat"><span>{{ total_kilos }} kg</span><small>Kilos aceptados</small></div>
+    </div>
+    <div class="filtros">
+        {% for e in estados + ['Todas'] %}
+        <a href="{{ url_for('admin', estado=e) }}" class="pill-link {{ 'activo' if e == estado }}">{{ e }}{% if e != 'Todas' %} ({{ cuenta[e] }}){% endif %}</a>
+        {% endfor %}
+        <a href="{{ url_for('reportes') }}" class="btn ghost small">📊 Ver reportes</a>
+    </div>
+    {% if compostas %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Composta</th><th>Alumno</th><th>Peso</th><th>Ingredientes</th><th>Foto</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        {% for c in compostas %}
+        <tr>
+            <td><strong>{{ c.get('codigo', '—') }}</strong><br><small>{{ c.fechaRegistro|fecha }}</small></td>
+            <td>{{ c.nombreAlumno }}<br><small>{{ c.numeroControl }}</small></td>
+            <td>{{ c.pesoKg }} kg</td>
+            <td>{% for i in c|ingredientes %}<span class="tag">{{ i }}</span>{% endfor %}</td>
+            <td><img data-foto src="{{ url_for('foto', id_composta=c._id) }}" alt="Foto"></td>
+            <td><span class="badge {{ c.get('estado', 'Pendiente')|lower }}">{{ c.get('estado', 'Pendiente') }}</span></td>
+            <td><a class="btn small" href="{{ url_for('revisar', id_composta=c._id) }}">{{ 'Revisar' if c.get('estado', 'Pendiente') == 'Pendiente' else 'Ver / corregir' }}</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}
+    <div class="card empty"><div class="big">🌱</div><p>No hay compostas con este estado.</p></div>
+    {% endif %}
+    <div class="actions"><a href="{{ url_for('inicio') }}" class="btn ghost">Volver al inicio</a></div>
+</div>
+{% endblock %}

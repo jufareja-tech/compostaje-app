@@ -1,0 +1,69 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Corregir composta{% endblock %}
+{% block content %}
+<div class="form-container wide">
+    <h2>✏️ Corregir Composta: {{ c.codigo }}</h2>
+
+    <div class="alert alert-error" style="margin-bottom: 20px;">
+        <strong>Motivo del rechazo:</strong> {{ c.get('observaciones', 'No especificado') }}
+    </div>
+
+    <form method="POST" action="{{ url_for('corregir_composta', id_composta=c._id) }}" enctype="multipart/form-data">
+
+        <div class="form-group">
+            <label>Fotografía actual</label>
+            <img src="{{ url_for('foto', id_composta=c._id) }}" alt="Foto actual" style="max-height: 200px; border-radius: 14px; margin-bottom: 10px; display: block;">
+
+            <label for="fotografia">Subir nueva fotografía (opcional)</label>
+            <input type="file" id="fotografia" name="fotografia" accept="image/png,image/jpeg,image/gif">
+            <small class="hint">Si no subes nada, se conservará la foto anterior.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="peso">Peso (kg)</label>
+            <input type="number" step="0.1" min="0.1" id="peso" name="peso" value="{{ c.pesoKg }}" required>
+        </div>
+
+        <fieldset class="form-group">
+            <legend>Ingredientes</legend>
+            <div class="chips">
+                {% for i in sugeridos %}
+                <label class="chip">
+                    <input type="checkbox" name="ingredientes" value="{{ i }}" {% if i in declarados %}checked{% endif %}>
+                    <span>{{ i }}</span>
+                </label>
+                {% endfor %}
+
+                <!-- Lógica segura para verificar si hay ingredientes "Otro" -->
+                {% set tiene_otros = false %}
+                {% for d in declarados %}
+                    {% if d not in sugeridos %}
+                        {% set tiene_otros = true %}
+                    {% endif %}
+                {% endfor %}
+
+                <label class="chip">
+                    <input type="checkbox" name="ingredientes" value="Otro" id="chk-otro" {% if tiene_otros %}checked{% endif %}>
+                    <span>Otro</span>
+                </label>
+            </div>
+
+            <div class="otros" data-otros data-otros-name="otrosIngredientes" data-otros-for="chk-otro">
+                <div class="otros-list">
+                    {% for o in declarados if o not in sugeridos %}
+                    <div class="otros-fila">
+                        <input type="text" name="otrosIngredientes" value="{{ o }}" maxlength="60">
+                        <button type="button" class="quitar">✕</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn ghost small" data-add-otro>+ Agregar otro</button>
+            </div>
+        </fieldset>
+
+        <button type="submit" class="btn block">Reenviar a revisión</button>
+    </form>
+    <p style="margin-top: 15px;"><a href="{{ url_for('mis_compostas') }}">Cancelar y volver</a></p>
+</div>
+{% endblock %}

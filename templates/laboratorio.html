@@ -1,0 +1,79 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Panel de Laboratorio{% endblock %}
+{% block content %}
+<div class="container wide">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h1 class="page-title">🔬 Panel de Laboratorio</h1>
+            <p class="page-sub">Registro de mediciones físicas y químicas de las muestras.</p>
+        </div>
+        <a href="{{ url_for('registrar_muestra') }}" class="btn">➕ Nueva Muestra</a>
+    </div>
+
+    <form method="GET" class="card filtro-form" style="margin-bottom: 20px;">
+        <div>
+            <label for="q">Buscar por tipo de residuo o código</label>
+            <input type="search" id="q" name="q" value="{{ request.args.get('q', '') }}" placeholder="Ej. Pila B1 o MUE-2026...">
+        </div>
+        <div><button class="btn" type="submit">Filtrar</button></div>
+    </form>
+
+    {% if muestras %}
+    <div class="table-wrap"><table>
+        <thead>
+            <tr>
+                <th>Código / Fecha</th>
+                <th>Tipo de Residuo</th>
+                <th>Mediciones Completas</th>
+                <th>Fotos</th>
+                <th>Laboratorista</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for m in muestras %}
+        <tr>
+            <td><strong>{{ m.codigo }}</strong><br><small>{{ m.fecha|fecha }}</small></td>
+            <td>
+                {{ m.tipo_residuo }}<br>
+                <small>Inóculo: {{ m.inoculo|default('N/A') }}</small>
+            </td>
+            <td>
+                <small style="line-height: 1.4;">
+                    <strong>pH:</strong> {{ m.ph|default('—') }} (±{{ m.ph_desv|default('—') }})<br>
+                    <strong>Cond. Eléc:</strong> {{ m.conductividad|default('—') }} (±{{ m.conductividad_desv|default('—') }}) µS/Cm<br>
+                    <strong>Humedad:</strong> {{ m.humedad|default('—') }}% (±{{ m.humedad_desv|default('—') }})<br>
+                    <strong>Mat. Orgánica:</strong> {{ m.materia_organica|default('—') }}% (±{{ m.materia_organica_desv|default('—') }})<br>
+                    <strong>Cenizas:</strong> {{ m.cenizas|default('—') }}% (±{{ m.cenizas_desv|default('—') }})<br>
+                    <strong>Carbono:</strong> {{ m.carbono|default('—') }}% (±{{ m.carbono_desv|default('—') }})<br>
+                    <strong>Nitrógeno:</strong> {{ m.nitrogeno|default('—') }}%<br>
+                    <strong>Relación C:N:</strong> {{ m.relacion_cn|default('—') }}
+                </small>
+            </td>
+            <td>
+                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    {% for f in m.fotografias %}
+                        <a href="data:{{ f.fotoTipo }};base64,{{ f.fotoBase64 }}" target="_blank">
+                            <img src="data:{{ f.fotoTipo }};base64,{{ f.fotoBase64 }}" alt="Foto" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                        </a>
+                    {% else %}
+                        <span class="sin-foto">Sin foto</span>
+                    {% endfor %}
+                </div>
+            </td>
+            <td>{{ m.laboratorista }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}
+    <div class="card empty">
+        <div class="big">🧪</div>
+        <p>No hay muestras registradas aún en el laboratorio.</p>
+    </div>
+    {% endif %}
+    <div class="actions">
+        <a href="{{ url_for('inicio') }}" class="btn ghost">Volver al inicio</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,144 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Reportes{% endblock %}
+{% block content %}
+<div class="container wide">
+    <h1 class="page-title">Reportes</h1>
+    {% if datos.stats_globales %}
+    <div class="stats" style="margin-bottom: 30px; margin-top: 20px;">
+        <div class="stat">
+            <span>{{ datos.stats_globales.kilos }} kg</span>
+            <small>Total de residuos aceptados</small>
+        </div>
+        <div class="stat">
+            <span>{{ datos.stats_globales.participaciones }}</span>
+            <small>Participaciones totales</small>
+        </div>
+        <div class="stat">
+            <span>{{ datos.stats_globales.estudiantes }}</span>
+            <small>Estudiantes que han participado</small>
+        </div>
+        <div class="stat" style="background-color: var(--header-dark);">
+            <span>{{ datos.stats_globales.promedio }} kg</span>
+            <small>Promedio por estudiante</small>
+        </div>
+    </div>
+    {% endif %}
+    {% if reporte != 'participaciones' %}
+    <p class="page-sub">{{ 'Se cuentan todas las compostas, aunque estén pendientes o rechazadas.' if estado == 'Todas' else 'Solo se cuentan las compostas aceptadas.' }}</p>
+    {% else %}
+    <p class="page-sub">Participaciones = compostas registradas. Los kilos solo suman las aceptadas.</p>
+    {% endif %}
+
+    <div class="filtros">
+        {% for clave, nombre in [('participaciones','Participaciones por periodo'),('periodo','Por carrera y fechas'),('semestre','Por periodo'),('semestre_sexo_carrera','Por periodo, sexo y carrera'),('estudiante','Por estudiante')] %}
+        <a href="{{ url_for('reportes', reporte=clave, estado=estado) }}" class="pill-link {% if reporte == clave %}activo{% endif %}">{{ nombre }}</a>
+        {% endfor %}
+    </div>
+
+    <form method="GET" class="card filtro-form">
+        <input type="hidden" name="reporte" value="{{ reporte }}">
+
+        {% if reporte == 'participaciones' %}
+        <div><label for="q">Nombre o no. de control</label><input type="search" id="q" name="q" value="{{ q }}"></div>
+        <div><label for="periodo">Periodo</label>
+            <select id="periodo" name="periodo"><option value="">Todos</option>
+            {% for p in periodos %}
+                <option value="{{ p }}" {{ "selected" if p == periodo_sel else "" }}>{{ p }}</option>
+            {% endfor %}
+            </select></div>
+        <div><label for="sem">Semestre que cursa</label>
+            <select id="sem" name="sem"><option value="">Todos</option>
+            {% for n in semestres %}
+                <option value="{{ n }}" {{ "selected" if n == sem_sel else "" }}>{{ n }}.º</option>
+            {% endfor %}
+            </select></div>
+
+        {% elif reporte == 'periodo' %}
+        <div><label for="inicio">Desde</label><input type="date" id="inicio" name="inicio" value="{{ inicio }}"></div>
+        <div><label for="fin">Hasta</label><input type="date" id="fin" name="fin" value="{{ fin }}"></div>
+        <div><label for="carrera">Carrera</label>
+            <select id="carrera" name="carrera"><option value="">Todas</option>
+            {% for ca in carreras %}
+                <option value="{{ ca }}" {{ "selected" if ca == carrera_sel else "" }}>{{ ca }}</option>
+            {% endfor %}
+            </select></div>
+
+        {% elif reporte == 'estudiante' %}
+        <div><label for="alumno">Estudiante</label>
+            <select id="alumno" name="alumno"><option value="">Elige un estudiante…</option>
+            {% for u in datos.alumnos %}
+                <option value="{{ u._id }}" {{ "selected" if u._id|string == alumno_sel else "" }}>{{ u.nombre }} ({{ u.numeroControl }})</option>
+            {% endfor %}
+            </select></div>
+        {% endif %}
+
+        {% if reporte != 'participaciones' %}
+        <div><label for="estado">Entregas</label>
+            <select id="estado" name="estado">
+                <option value="Aceptada" {{ "selected" if estado != 'Todas' else "" }}>Solo aceptadas</option>
+                <option value="Todas" {{ "selected" if estado == 'Todas' else "" }}>Todas</option>
+            </select></div>
+        {% endif %}
+        <div><button class="btn" type="submit">Generar reporte</button></div>
+    </form>
+
+    {% if reporte == 'participaciones' %}
+        {% if datos.filas %}
+        <div class="table-wrap"><table>
+            <thead><tr><th>Periodo</th><th>Estudiante</th><th>Carrera</th><th>Sem.</th><th>Participaciones</th><th>Aceptadas</th><th>Kilos</th><th>Puntos DH</th><th></th></tr></thead>
+            <tbody>{% for f in datos.filas %}<tr>
+                <td>{{ f.periodo }}</td>
+                <td><strong>{{ f.u.nombre }}</strong><br><small>{{ f.u.numeroControl }}</small></td>
+                <td>{{ f.u.carrera }}</td>
+                <td>{% if f.sem %}{{ f.sem }}.º{% else %}—{% endif %}</td>
+                <td><strong>{{ f.reg }}</strong></td><td>{{ f.acep }}</td><td>{{ f.kilos }} kg</td>
+                <td><strong>{{ f.puntos }}</strong></td>
+                <td><a class="btn small" href="{{ url_for('estudiante_detalle', uid=f.id) }}">Historial</a></td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}<div class="card empty"><p>No hay participaciones con esos filtros.</p></div>{% endif %}
+
+    {% elif reporte == 'periodo' %}
+        {% if datos.filas is defined and datos.filas %}
+        <div class="table-wrap"><table>
+            <thead><tr><th>Carrera</th><th>Entregas</th><th>Participantes por sexo</th><th>Kilos</th></tr></thead>
+            <tbody>{% for f in datos.filas %}<tr><td>{{ f.carrera }}</td><td>{{ f.entregas }}</td><td>{{ f.sexo }}</td><td>{{ f.kilos }} kg</td></tr>{% endfor %}</tbody>
+            <tfoot><tr><td colspan="3"><strong>Total</strong></td><td><strong>{{ datos.total }} kg</strong></td></tr></tfoot>
+        </table></div>
+        {% else %}<div class="card empty"><p>Elige fechas y genera el reporte, o no hay entregas en ese rango.</p></div>{% endif %}
+
+    {% elif reporte == 'semestre' %}
+        {% if datos.filas %}
+        <div class="table-wrap"><table>
+            <thead><tr><th>Periodo</th><th>Participantes</th><th>Entregas</th><th>Kilos</th></tr></thead>
+            <tbody>{% for f in datos.filas %}<tr><td>{{ f.periodo }}</td><td>{{ f.participantes }}</td><td>{{ f.entregas }}</td><td>{{ f.kilos }} kg</td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}<div class="card empty"><p>Todavía no hay entregas para reportar.</p></div>{% endif %}
+
+    {% elif reporte == 'semestre_sexo_carrera' %}
+        {% if datos.filas %}
+        <div class="table-wrap"><table>
+            <thead><tr><th>Periodo</th><th>Carrera</th><th>Participantes</th><th>Por sexo (H · M · NB)</th><th>Kilos</th></tr></thead>
+            <tbody>{% for f in datos.filas %}<tr><td>{{ f.periodo }}</td><td>{{ f.carrera }}</td><td>{{ f.participantes }}</td><td>{{ f.sexo }}</td><td>{{ f.kilos }} kg</td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}<div class="card empty"><p>Todavía no hay entregas para reportar.</p></div>{% endif %}
+
+    {% elif reporte == 'estudiante' %}
+        {% if datos.alumno is defined %}
+        <p class="page-sub"><strong>{{ datos.alumno.nombre }}</strong> · {{ datos.alumno.numeroControl }} · {{ datos.alumno.carrera }} · {{ datos.alumno.sexo }} — Total: <strong>{{ datos.total }} kg</strong> — Puntos DH: <strong>{{ datos.puntos }}</strong></p>
+        {% if datos.lista %}
+        <div class="table-wrap"><table>
+            <thead><tr><th>Composta</th><th>Foto</th><th>Ingredientes</th><th>Estado</th><th>Peso</th><th>Acumulado</th></tr></thead>
+            <tbody>{% for c in datos.lista %}<tr>
+                <td><strong>{{ c.get('codigo', '—') }}</strong><br><small>{{ c.fechaRegistro|fecha }}</small><br><span class="tag">{{ c.periodo }}</span></td>
+                <td><a href="{{ url_for('foto', id_composta=c._id) }}" target="_blank"><img data-foto src="{{ url_for('foto', id_composta=c._id) }}" alt="Foto"></a></td>
+                <td>{% for i in c|ingredientes %}<span class="tag">{{ i }}</span>{% endfor %}</td>
+                <td><span class="badge {{ c.get('estado', 'Pendiente')|lower }}">{{ c.get('estado', 'Pendiente') }}</span></td>
+                <td>{{ c.pesoKg }} kg</td><td>{{ c.acumulado }} kg</td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}<div class="card empty"><p>Este estudiante no tiene entregas con ese filtro.</p></div>{% endif %}
+        {% else %}<div class="card empty"><p>Elige un estudiante para ver su historial.</p></div>{% endif %}
+    {% endif %}
+    <div class="actions"><a href="{{ url_for('estudiantes') }}" class="btn ghost">👥 Estudiantes</a> <a href="{{ url_for('admin') }}" class="btn ghost">Volver a la revisión</a></div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Historial de {{ u.nombre }}{% endblock %}
+{% block content %}
+<div class="container wide">
+    <h1 class="page-title">{{ u.nombre }}</h1>
+    <p class="page-sub">{{ u.numeroControl }} · {{ u.carrera }} · {{ u.sexo }} · {{ (u.semestre ~ '.º semestre') if u.get('semestre') else 'semestre sin registrar' }}</p>
+
+    <h2 class="sub-title">Participaciones por periodo</h2>
+    {% if resumen %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Periodo</th><th>Participaciones</th><th>Aceptadas</th><th>Kilos aceptados</th></tr></thead>
+        <tbody>{% for r in resumen %}<tr><td>{{ r.periodo }}</td><td><strong>{{ r.reg }}</strong></td><td>{{ r.acep }}</td><td>{{ r.kilos }} kg</td></tr>{% endfor %}</tbody>
+    </table></div>
+
+    <h2 class="sub-title">Historial detallado</h2>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Composta</th><th>Foto</th><th>Peso</th><th>Ingredientes</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        {% for c in compostas %}
+        <tr>
+            <td><strong>{{ c.get('codigo', '—') }}</strong><br><small>{{ c.fechaRegistro|fecha }}</small><br><span class="tag">{{ c.periodo }}</span>{% if c.semcurs %} <span class="tag">{{ c.semcurs }}.º sem.</span>{% endif %}</td>
+            <td><a href="{{ url_for('foto', id_composta=c._id) }}" target="_blank"><img data-foto src="{{ url_for('foto', id_composta=c._id) }}" alt="Foto de la composta"></a></td>
+            <td>{{ c.pesoKg }} kg</td>
+            <td>{% for i in c|ingredientes %}<span class="tag">{{ i }}</span>{% endfor %}</td>
+            <td><span class="badge {{ c.get('estado', 'Pendiente')|lower }}">{{ c.get('estado', 'Pendiente') }}</span>
+                {% if c.get('observaciones') %}<p class="nota">{{ c.observaciones }}</p>{% endif %}</td>
+            <td><a class="btn small" href="{{ url_for('revisar', id_composta=c._id) }}">Revisar</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}
+    <div class="card empty"><div class="big">🌱</div><p>Este estudiante todavía no ha registrado compostas.</p></div>
+    {% endif %}
+    <div class="actions"><a href="{{ url_for('estudiantes') }}" class="btn ghost">← Volver a estudiantes</a></div>
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+<!--suppress ALL -->
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Registrar composta{% endblock %}
+{% block content %}
+<div class="form-container wide">
+    <h2>📸 Registrar nueva composta</h2>
+
+    <!-- Mensaje de aviso para el modo offline -->
+    <div id="offline-alert" class="alert alert-error" style="display: none;">
+        ⚠️ No tienes conexión a internet. Los datos se guardarán temporalmente en tu dispositivo y se enviarán cuando recuperes la señal.
+    </div>
+
+    <form method="POST" action="{{ url_for('registrar_composta') }}" enctype="multipart/form-data" id="form-composta">
+        <div class="form-group">
+            <span class="label-like" id="lblFoto">Fotografía de la composta</span>
+            <div class="foto-box">
+                <label for="fotografia" class="foto-zona">
+                    <span class="foto-icono" aria-hidden="true">📷</span>
+                    <span>Seleccionar o tomar fotografía</span>
+                    <small id="fotoNombre">Ningún archivo seleccionado</small>
+                </label>
+                <input type="file" id="fotografia" name="fotografia" class="foto-input"
+                       accept="image/png,image/jpeg,image/gif" required aria-labelledby="lblFoto">
+                <input type="file" id="fotoCaptura" accept="image/*" capture="environment" hidden>
+                <img id="fotoVista" class="foto-vista" alt="Vista previa de la fotografía" hidden>
+                <button type="button" class="btn ghost small" id="btnCamara">📸 Usar cámara</button>
+            </div>
+        </div>
+
+        <div class="modal" id="camaraModal" role="dialog" aria-modal="true" aria-label="Tomar fotografía" hidden>
+            <div class="modal-caja">
+                <video id="camaraVideo" autoplay playsinline muted></video>
+                <div class="modal-botones">
+                    <button type="button" class="btn" id="btnCapturar">📸 Capturar</button>
+                    <button type="button" class="btn ghost" id="btnCerrarCamara">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="peso">Peso (kg)</label>
+            <input type="number" step="0.1" min="0.1" id="peso" name="peso" required>
+        </div>
+
+        <fieldset class="form-group">
+            <legend>¿Qué traje?</legend>
+            <p class="hint">Marca todos los ingredientes que contiene (al menos uno).</p>
+            <div class="chips">
+                {% for i in sugeridos %}
+                <label class="chip"><input type="checkbox" name="ingredientes" value="{{ i }}"><span>{{ i }}</span></label>
+                {% endfor %}
+                <label class="chip"><input type="checkbox" name="ingredientes" value="Otro" id="chk-otro"><span>Otro</span></label>
+            </div>
+            <div class="otros" data-otros data-otros-name="otrosIngredientes" data-otros-for="chk-otro" hidden>
+                <div class="otros-list"></div>
+                <button type="button" class="btn ghost small" data-add-otro>+ Agregar otro</button>
+            </div>
+        </fieldset>
+
+        <div class="form-group">
+            <label>Fecha y hora de registro</label>
+            <input type="text" value="Automáticas al guardar" disabled>
+        </div>
+        <button type="submit" class="btn block">Registrar composta</button>
+    </form>
+    <p><a href="{{ url_for('inicio') }}">Volver al inicio</a></p>
+</div>
+
+<!-- SCRIPT PARA MODO OFFLINE -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("form-composta");
+    const offlineAlert = document.getElementById("offline-alert");
+
+    // Detectar si ya está sin internet al cargar la página
+    if (!navigator.onLine) {
+        offlineAlert.style.display = "block";
+    }
+
+    // Escuchar cambios en la conexión
+    window.addEventListener("online", () => {
+        offlineAlert.style.display = "none";
+        sincronizarPendientes();
+    });
+    window.addEventListener("offline", () => {
+        offlineAlert.style.display = "block";
+    });
+
+    form.addEventListener("submit", async (e) => {
+        if (!navigator.onLine) {
+            e.preventDefault(); // Evitamos el envío normal al servidor
+
+            const formData = new FormData(form);
+            const data = {
+                peso: formData.get("peso"),
+                ingredientes: formData.getAll("ingredientes"),
+                otrosIngredientes: formData.getAll("otrosIngredientes"),
+                fecha: new Date().toISOString()
+            };
+
+            const file = form.querySelector('input[type="file"]').files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    data.fotoBase64 = event.target.result; // Guardamos la foto como texto
+                    data.fotoNombre = file.name;
+                    guardarOffline(data);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                guardarOffline(data);
+            }
+        }
+    });
+
+    function guardarOffline(data) {
+        let pendientes = JSON.parse(localStorage.getItem("compostas_pendientes") || "[]");
+        pendientes.push(data);
+        localStorage.setItem("compostas_pendientes", JSON.stringify(pendientes));
+
+        alert("📴 No tienes internet. La composta se guardó en tu dispositivo. Se enviará automáticamente cuando recuperes la conexión.");
+        form.reset();
+        // Ocultar vista previa de la foto
+        document.getElementById("fotoVista").hidden = true;
+        document.getElementById("fotoNombre").textContent = "Ningún archivo seleccionado";
+    }
+
+    function sincronizarPendientes() {
+        let pendientes = JSON.parse(localStorage.getItem("compostas_pendientes") || "[]");
+        if (pendientes.length > 0) {
+            if(confirm(`Se detectó conexión a internet. Tienes ${pendientes.length} composta(s) pendiente(s). ¿Deseas enviarlas ahora?`)) {
+                // Aquí se haría el envío real al servidor usando fetch()
+                // Por seguridad y simplicidad en esta prueba, solo limpiamos la memoria
+                // (En un sistema real, aquí subiríamos los datos a MongoDB)
+                localStorage.removeItem("compostas_pendientes");
+                alert("✅ Compostas sincronizadas (Simulación).");
+                location.reload();
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

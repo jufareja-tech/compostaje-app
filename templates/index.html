@@ -1,0 +1,47 @@
+<!--suppress ALL -->
+{% extends "base.html" %}
+{% block title %}Inicio - Control del proceso de compostaje{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>Control del proceso de compostaje mediante análisis de imágenes</h1>
+    <p>Registra tus compostas con fotografía, peso e ingredientes y ayuda a convertir residuos en tierra fértil.</p>
+    <div class="emoji-row"><span>🍌</span><span>🍂</span><span>🌱</span><span>🥚</span><span>🪱</span></div>
+</section>
+
+<div class="banner">
+    {% if session.get('usuario_id') %}
+        <h2>Hola, {{ session.get('nombre') }}</h2>
+        <p>Panel de {{ session.get('rol', 'estudiante') | capitalize }}</p>
+    {% else %}
+        <h2>Únete con tu número de control</h2>
+        <p>Crea tu cuenta y empieza a registrar tus compostas</p>
+    {% endif %}
+</div>
+
+<section class="band">
+    <div class="circles">
+    {% if session.get('usuario_id') %}
+                {% if session.get('rol') in ['admin', 'validador'] %}
+        <a class="circle-item" href="{{ url_for('admin') }}"><div class="circle">✅</div>Revisar compostas</a>
+        <a class="circle-item" href="{{ url_for('estudiantes') }}"><div class="circle">👥</div>Estudiantes</a>
+        <a class="circle-item" href="{{ url_for('reportes') }}"><div class="circle">📊</div>Reportes</a>
+        {% endif %}
+
+        {% if session.get('rol') in ['admin', 'laboratorista'] %}
+        <a class="circle-item" href="{{ url_for('laboratorio') }}"><div class="circle">🔬</div>Laboratorio</a>
+        {% endif %}
+
+        {% if session.get('rol') == 'estudiante' %}
+        <a class="circle-item" href="{{ url_for('registrar_composta') }}"><div class="circle">📸</div>Registrar composta</a>
+        <a class="circle-item" href="{{ url_for('mis_compostas') }}"><div class="circle">📋</div>Mis compostas</a>
+        {% endif %}
+        <a class="circle-item" href="{{ url_for('logout') }}"><div class="circle">🚪</div>Cerrar sesión</a>
+    {% else %}
+        <a class="circle-item" href="{{ url_for('login') }}"><div class="circle">🔑</div>Iniciar sesión</a>
+        <a class="circle-item" href="{{ url_for('registro') }}"><div class="circle">📝</div>Registrarse</a>
+    {% endif %}
+    </div>
+</section>
+
+<section class="band light"></section>
+{% endblock %}

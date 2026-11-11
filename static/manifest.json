@@ -1,0 +1,21 @@
+{
+  "name": "Control de Compostaje",
+  "short_name": "Compostaje",
+  "description": "Sistema para el control del proceso de compostaje",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#d5f0e3",
+  "theme_color": "#3f6b5c",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
